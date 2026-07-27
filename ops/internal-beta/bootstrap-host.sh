@@ -127,7 +127,7 @@ PY
 }
 
 ensure_caddy_bootstrap_config() {
-  if [[ -e $caddy_config ]]; then
+  if [[ -e $caddy_config || -L $caddy_config ]]; then
     [[ -f $caddy_config && ! -L $caddy_config ]] ||
       fail 'existing Caddy configuration must be one regular file'
     return
