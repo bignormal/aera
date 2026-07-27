@@ -218,8 +218,10 @@ firewall, proves strict host-key and Ed25519 key access before it permits
 password/root SSH hardening, and leaves cloud-console recovery intact.
 `generate-secrets.sh` refuses overwrite and produces independent Cloud/Admin
 datastore, key-ring, HMAC, OAuth/signing, Official Agent, quality, MinIO,
-encrypted-backup, mTLS, and service-JWT material. Only the offline-entitlement
-key ID and 32-byte public key leave the host-secret boundary.
+encrypted-backup, Payload, mTLS, and service-JWT material. The Admin Payload
+secret is independently generated, collision checked, and written only to the
+owner-controlled Admin environment. Only the offline-entitlement key ID and
+32-byte public key leave the host-secret boundary.
 
 `install-ip-certificate.sh` requires Certbot 5.4 or newer, proves staging IP
 issuance before trusted short-lived issuance, then installs automatic renewal

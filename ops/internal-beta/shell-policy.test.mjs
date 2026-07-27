@@ -355,6 +355,12 @@ test("secret generation prepares the live Admin-to-Cloud trust view", async () =
     source,
     /AGENTERA_CLOUD_ADMIN_JWT_SUBJECT=aera-admin-internal-beta/u,
   );
+  assert.match(source, /printf 'PAYLOAD_SECRET=%s\\n' "\$admin_payload"/u);
+  assert.match(
+    source,
+    /"\$admin_operation_hmac" "\$admin_payload" "\$cloud_access_private"/u,
+    "Payload secret must be independently generated and collision checked",
+  );
   assert.match(source, /setfacl -m u:1001:--x "\$output_dir\/admin-pki"/u);
   assert.match(source, /setfacl -m u:1001:r--/u);
 });

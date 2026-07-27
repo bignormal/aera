@@ -228,6 +228,7 @@ admin_totp_encryption=$(random_base64)
 admin_session_hmac=$(random_base64)
 admin_csrf_hmac=$(random_base64)
 admin_operation_hmac=$(random_base64)
+admin_payload=$(random_base64)
 
 IFS='|' read -r cloud_access_private cloud_access_public < <(
   generate_ed25519_raw access-signing
@@ -251,8 +252,8 @@ for material in \
   "$cloud_internal_admin_hmac" "$cloud_rollout_hmac" "$cloud_quality_hmac" \
   "$admin_identity_encryption" "$admin_identity_lookup" \
   "$admin_totp_encryption" "$admin_session_hmac" "$admin_csrf_hmac" \
-  "$admin_operation_hmac" "$cloud_access_private" "$cloud_offline_private" \
-  "$cloud_agent_private"
+  "$admin_operation_hmac" "$admin_payload" "$cloud_access_private" \
+  "$cloud_offline_private" "$cloud_agent_private"
 do
   record_material "$material" >>"$material_ledger"
 done
@@ -421,6 +422,7 @@ admin_env="$output_dir/admin.env"
   printf 'AERA_ADMIN_SESSION_HMAC_KEY=%s\n' "$admin_session_hmac"
   printf 'AERA_ADMIN_CSRF_HMAC_KEY=%s\n' "$admin_csrf_hmac"
   printf 'AERA_ADMIN_OPERATION_HMAC_KEY=%s\n' "$admin_operation_hmac"
+  printf 'PAYLOAD_SECRET=%s\n' "$admin_payload"
   printf 'AERA_ADMIN_CLOUD_CA_FILE_HOST=%s\n' \
     "$output_dir/pki/internal-admin-ca.pem"
   printf 'AERA_ADMIN_CLOUD_CLIENT_CERT_FILE_HOST=%s\n' \
