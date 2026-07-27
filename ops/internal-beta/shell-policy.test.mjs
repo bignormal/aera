@@ -151,6 +151,11 @@ test("host preparation installs the exact Cosign verifier used by candidate CI",
   );
   assert.match(installer, /sha256sum --check --status/u);
   assert.match(installer, /GitVersion:/u);
+  assert.ok(
+    installer.indexOf("[[ -x $cosign_install ]]") <
+      installer.indexOf('download="https://github.com/'),
+    "an already verified exact Cosign binary must avoid a network download",
+  );
 
   const preparation = source.slice(source.indexOf("prepare_host()"));
   const installCosign = preparation.indexOf("install_cosign");
@@ -159,6 +164,26 @@ test("host preparation installs the exact Cosign verifier used by candidate CI",
   assert.ok(
     installCertbot > installCosign,
     "Cosign must be verified before certificate and deployment preparation",
+  );
+});
+
+test("host preparation can restart after a removed Caddy configuration", async () => {
+  const source = await readFile(
+    path.join(directory, "bootstrap-host.sh"),
+    "utf8",
+  );
+  const preparation = source.slice(source.indexOf("prepare_host()"));
+  const ensureConfig = preparation.indexOf("ensure_caddy_bootstrap_config");
+  const startCaddy = preparation.indexOf("systemctl enable --now caddy");
+
+  assert.match(source, /ensure_caddy_bootstrap_config\(\)/u);
+  assert.match(source, /\[\[ -e \$caddy_config \]\]/u);
+  assert.match(source, /http:\/\/localhost/u);
+  assert.match(source, /caddy validate --config "\$caddy_config"/u);
+  assert.ok(ensureConfig >= 0, "host preparation must ensure a Caddy config");
+  assert.ok(
+    startCaddy > ensureConfig,
+    "Caddy must start only after its bootstrap configuration exists",
   );
 });
 
@@ -246,4 +271,24 @@ test("secret generation does not hide OpenSSL diagnostics", async () => {
     source,
     /openssl (?:genpkey|pkey|req|x509)[\s\S]{0,240}2>\/dev\/null/u,
   );
+});
+
+test("secret generation prepares the live Admin-to-Cloud trust view", async () => {
+  const source = await readFile(
+    path.join(directory, "generate-secrets.sh"),
+    "utf8",
+  );
+
+  assert.match(source, /write_admin_pki_view\(\)/u);
+  for (const file of ["ca.pem", "client.pem", "client-key.pem", "service-key.pem"]) {
+    assert.match(source, new RegExp(`admin_pki_dir/${file.replace(".", "\\.")}`, "u"));
+  }
+  assert.match(
+    source,
+    /AGENTERA_CLOUD_ADMIN_BASE_URL=https:\/\/aera-cloud-internal-admin:8443/u,
+  );
+  assert.match(source, /AGENTERA_CLOUD_ADMIN_JWT_ISSUER=aera-admin/u);
+  assert.match(source, /AGENTERA_CLOUD_ADMIN_JWT_SUBJECT=aera-admin-internal-beta/u);
+  assert.match(source, /setfacl -m u:1001:--x "\$output_dir\/admin-pki"/u);
+  assert.match(source, /setfacl -m u:1001:r--/u);
 });
