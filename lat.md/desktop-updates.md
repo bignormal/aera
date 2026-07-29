@@ -28,6 +28,8 @@ The unsigned `0.7.4-internal-beta.6` package predates this client, while Beta.7 
 
 `.github/workflows/internal-beta.yml` builds both target packages from one exact successful-CI source, creates and locally verifies canonical update metadata with the protected offline signing key, records those metadata bytes in `SHA256SUMS`, and then streams only the two update artifacts plus metadata to the dedicated `aera-updates` SSH principal. The forced server command `scripts/internal-beta/publish-desktop-update.sh` rejects extra paths, unsafe archive entries, invalid signatures, changed hashes, downgrades, and replacement bytes under an existing version. A channel-wide file lock serializes version checks and publication. It publishes immutable release directories before atomically switching the `current` metadata symlink. The workflow then compares live metadata byte-for-byte and probes both live versioned artifacts.
 
+Desktop packaging uses an explicit application allowlist: compiled `out`, package metadata, the application icon, and Runtime trust. Runtime Seed remains a separately verified `extraResources` payload. Developer worktrees, source, tests, caches, release evidence, and local build output must not enter `app.asar`.
+
 The Cloud Caddy route serves current metadata with `Cache-Control: no-store` and immutable versioned artifacts with a one-year cache. The general Cloud reverse proxy cannot shadow these paths.
 
 ### Test specifications
@@ -41,6 +43,7 @@ The release contract covers signed metadata, exact artifact bytes, persisted sta
 - Server publication is atomic and idempotent only for the exact same signed bytes.
 - Login/render timing cannot hide an already available or downloaded update.
 - macOS extraction writes the staged `app.asar` with Electron ASAR interception disabled and restores the previous process setting after success or failure.
+- Packaged `app.asar` is produced from an explicit application allowlist and excludes local source, tests, worktrees, caches, evidence, and build output.
 
 ## Immutable signed production candidates
 
